@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System;
+using System.Collections.Generic;
 
 namespace Librarian
 {
@@ -214,9 +215,54 @@ namespace Librarian
                 endOfFile:
                         Console.WriteLine ("I LOVE GOTO xD");
                 }
+
+                // Reading files from decompressed header
+
+                headerHighStream.Seek (0x20, SeekOrigin.Begin);
+
+                int numberOfFiles = binaryHeaderHighReader.ReadInt32 ();
+                int archiveSize = binaryHeaderHighReader.ReadInt32 ();
+
+                var files = new List<HmmsysPackFile> (numberOfFiles);
+
+                HmmsysPackFile previousFile = null;
+                for (int i = 0; i < numberOfFiles; i++)
+                {
+                    int     nameLength         = binaryHeaderHighReader.ReadByte ();
+                    int     nameReuseLength    = binaryHeaderHighReader.ReadByte ();
+                    string  fileName           = previousFile != null ? previousFile.Name.Substring (0, nameReuseLength) : "";
+                    fileName += new string (binaryHeaderHighReader.ReadChars (nameLength - nameReuseLength));
+
+                    int fileOffset = binaryHeaderHighReader.ReadInt32 ();
+                    int fileLength = binaryHeaderHighReader.ReadInt32 ();
+
+                    var packFile = new HmmsysPackFile (fileName, nameLength, nameReuseLength, fileLength, fileOffset);
+                    previousFile = packFile;
+
+                    files.Add (packFile);
+                }
+
                 headerLowStream.Dispose ();
                 headerHighStream.Dispose ();
             }
         }
+    }
+}
+
+class HmmsysPackFile
+{
+    public int      NameLength      { get; set; }
+    public int      NameReuseLength { get; set; }
+    public string   Name            { get; set; }
+    public int      Length          { get; set; }
+    public int      Offset          { get; set; }
+
+    public HmmsysPackFile (string name, int nameLength, int nameReuseLength, int length, int offset)
+    {
+        Name            = name;
+        NameLength      = nameLength;
+        NameReuseLength = nameReuseLength;
+        Length          = length;
+        Offset          = offset;
     }
 }
