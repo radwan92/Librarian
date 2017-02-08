@@ -4,70 +4,27 @@ using System.Collections.Generic;
 
 namespace Librarian
 {
-    public class Decompressor
+    class Decompressor
     {
-        // Somewhat unknown constants
-        readonly int m_mlp = 9;
-        readonly int m_dir = 8;
-        readonly int m_uar = 2;
-
         string m_decompressedFile;
 
-        // TODO: Transform into switch (or evaluation if possible)
-        readonly byte[] m_bitLengthsTable =
-        {
-            0x00, 0x01, 0x02, 0x03,     0x04, 0x0F, 0x0F, 0x0F,     0x0F, 0x0F, 0x0F, 0x0F,     0x0F, 0x0F, 0x0F, 0x0F,
-            0x05, 0x06, 0x07, 0x08,     0x09, 0x0F, 0x0F, 0x0F,     0x0F, 0x0F, 0x0F, 0x0F,     0x0F, 0x0F, 0x0F, 0x0F,
-            0x0A, 0x0B, 0x0C, 0x0D,     0x0E
-        };
+        WdtFile         m_wdtFile = new WdtFile ();
+        WdtContentList  m_wdtContents;
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         // TODO: When we get some idea on how this stuff works, decompose this method
-        public void Decompress (string filePath)
+        public void DecompressWdt (string filePath)
         {
             m_decompressedFile = filePath;
 
             using (var fileStream = File.OpenRead (filePath))
             {
-                // Get base values from the file's header
-                var     binaryReader    = new BinaryReader (fileStream);
-                var     compressionType = new string (binaryReader.ReadChars (4));
-                uint    decompWdtSize   = binaryReader.ReadUInt32 ();
-                uint    coeff2          = binaryReader.ReadUInt32 ();
-                byte    bitLengths      = binaryReader.ReadByte ();
-                byte    unkArg          = binaryReader.ReadByte ();
+                m_wdtFile.ReadInHeader (new BinaryReader (fileStream));
+                m_wdtFile.PrintInfo ();
 
-                DebugUtils.PrintHex (decompWdtSize, 8, "Decomp WDT size", 2);
-                DebugUtils.PrintHex (coeff2, 8, "Coeff2", 3);
-                DebugUtils.PrintHex (bitLengths, 2, "Bit lengths", 3);
-                DebugUtils.PrintHex (unkArg, 2, "Unk arg", 3);
+                m_wdtContents = new WdtContentList (m_wdtFile);
+                m_wdtFile.PrintInfo ();
 
-                // TODO: What we refer to as header in the following part
-                // is (as far as I'm concerned) a list of the files contained
-                // in a given WDT. It should be distincted from the actual
-                // header (the 2 ints and 2 bytes read above)
-
-                // Calculating decompressed header size
-                int decompressedHeaderSize = (int)(m_mlp * coeff2 / m_dir + m_uar);
-
-                DebugUtils.PrintHex (decompressedHeaderSize, 8, "Decompressed header size", 1);
-
-                // Calculate compressed header size
-                int baseCompressedHeaderSize = (int)((decompWdtSize - 1) / coeff2) + 1;
-
-                DebugUtils.PrintHex (baseCompressedHeaderSize, 8, "Compressed header size", 1);
-
-                // Round to an additional 16 bytes
-                int extendedCompressedHeaderSize = baseCompressedHeaderSize / 16;
-                extendedCompressedHeaderSize ++;
-                extendedCompressedHeaderSize = extendedCompressedHeaderSize * 16;
-
-                DebugUtils.PrintHex (extendedCompressedHeaderSize, 8, "Extended compr. header size", 1);
-                
-                int baseCompHeadSizeBytes = baseCompressedHeaderSize * 4;
-
-                DebugUtils.PrintHex (baseCompHeadSizeBytes, 8, "Header size [bytes]");
-                DebugUtils.PrintHex (extendedCompressedHeaderSize * 4, 8, "Extended header size [bytes]", 1);
 
                 // Read compressed header into memory
                 byte[] header = new byte[extendedCompressedHeaderSize * 4];

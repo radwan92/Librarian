@@ -58,9 +58,13 @@
   <ItemGroup>
     <Compile Include="BinaryUtils.cs" />
     <Compile Include="DebugUtils.cs" />
+    <Compile Include="DecompressionUtils.cs" />
     <Compile Include="Decompressor.cs" />
+    <Compile Include="LzssDecompressor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WdtContentList.cs" />
+    <Compile Include="WdtFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
