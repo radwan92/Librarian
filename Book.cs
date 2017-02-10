@@ -30,7 +30,7 @@ namespace Librarian
                 SizeCompressed   = (int)fileStream.Length;
                 SizeDecompressed = reader.ReadUInt32 ();
                 PageSize         = reader.ReadUInt32 ();
-                BitLengths       = DecompressionUtils.GetBitLenghts (reader.ReadByte ());
+                BitLengths       = Utils.GetBitLenghts (reader.ReadByte ());
                 UnkArgument      = reader.ReadByte ();
             }
 

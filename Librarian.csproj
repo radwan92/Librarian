@@ -58,7 +58,7 @@
   <ItemGroup>
     <Compile Include="BinaryUtils.cs" />
     <Compile Include="DebugUtils.cs" />
-    <Compile Include="DecompressionUtils.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="Decompressor.cs" />
     <Compile Include="LzssDecompressor.cs" />
     <Compile Include="Program.cs" />

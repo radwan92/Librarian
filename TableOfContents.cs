@@ -39,36 +39,30 @@ namespace Librarian
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         void ReadThenDecompressAndParse ()
         {
+            byte[] contentDecompressed;
+            Chapter contentsChapter;
+
             using (var fileStream = new FileStream (m_book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var reader = new BinaryReader (fileStream);
                 fileStream.Seek (Book.HEADER_LENGTH, SeekOrigin.Begin);  // Get past header
 
-                //byte[] contentCompressed = new byte[CompressedSizeRounded * 4];
-                //reader.Read (contentCompressed, 0, CompressedSize);
-
-                //// Append WDT file size (compressed) to the content buffer [remember that it was rounded/extended to/by 2 bytes]
-                //BitConverter.GetBytes (book.CompressedSize).CopyTo (contentCompressed, CompressedSize);
-
                 // Had to hardcode size + 1 and the 0xAB at the end due to c++ malloc (to fully replicate arch.exe behaviour)
                 // More on this: https://msdn.microsoft.com/en-us/library/ms220938%28v=vs.80%29.aspx?f=255&MSPPError=-2147217396
-                byte[] contentDecompressed = new byte[SizeDecompressed + 1];
+                contentDecompressed = new byte[SizeDecompressed + 1];
                 contentDecompressed[SizeDecompressed] = 0xAB;
 
+                contentsChapter = m_book.ChapterList[0];
+                int chapterCopyOffset = SizeDecompressed - (int)contentsChapter.Size;
 
-                //var compressedStream = new MemoryStream (contentCompressed);
-                //var compressedReader = new BinaryReader (compressedStream);
-
-                int chapterStart      = reader.ReadInt32 ();
-                int chapterEnd        = reader.ReadInt32 ();
-                int chapterSize       = chapterEnd - chapterStart;
-                int chapterCopyOffset = SizeDecompressed - chapterSize;
-
+                contentsChapter.PrintInfo ();
                 DebugUtils.PrintHex (chapterCopyOffset, 8, "Chapter copy offset", 1);
 
-                fileStream.Seek (chapterSize, SeekOrigin.Begin);
-                fileStream.Read (contentDecompressed, chapterCopyOffset, chapterSize);
+                fileStream.Seek (contentsChapter.StartPosition, SeekOrigin.Begin);
+                fileStream.Read (contentDecompressed, chapterCopyOffset, (int)contentsChapter.Size);
             }
+
+            LzssDecompressor.Decompress (contentDecompressed, contentsChapter);
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
