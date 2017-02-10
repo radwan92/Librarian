@@ -141,21 +141,3 @@
         }
     }
 }
-
-class HmmsysPackFile
-{
-    public int      NameLength      { get; set; }
-    public int      NameReuseLength { get; set; }
-    public string   Name            { get; set; }
-    public int      Length          { get; set; }
-    public int      Offset          { get; set; }
-
-    public HmmsysPackFile (string name, int nameLength, int nameReuseLength, int length, int offset)
-    {
-        Name            = name;
-        NameLength      = nameLength;
-        NameReuseLength = nameReuseLength;
-        Length          = length;
-        Offset          = offset;
-    }
-}

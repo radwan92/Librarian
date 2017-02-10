@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Librarian
 {
     class TableOfContents
     {
+        public static readonly int CONTENTS_OFFSET = 0x20;
+
         // Somewhat unknown constants
         static readonly int m_mlp = 9;
         static readonly int m_dir = 8;
@@ -13,6 +16,8 @@ namespace Librarian
         public int SizeDecompressed;
         public int SizeCompressed;
         public int SizeCompressedRounded;
+
+        public List<TzarFileInfo> TzarFiles;
 
         Book m_book;
 
@@ -39,7 +44,7 @@ namespace Librarian
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         void ReadThenDecompressAndParse ()
         {
-            byte[] contentDecompressed;
+            byte[]  contentDecompressed;
             Chapter contentsChapter;
 
             using (var fileStream = new FileStream (m_book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -63,6 +68,35 @@ namespace Librarian
             }
 
             LzssDecompressor.Decompress (contentDecompressed, contentsChapter);
+
+            using (var decompressedStream = new MemoryStream (contentDecompressed))
+            {
+                decompressedStream.Seek (CONTENTS_OFFSET, SeekOrigin.Begin);
+                var decompressedContents = new BinaryReader (decompressedStream);
+
+                int numberOfFiles = decompressedContents.ReadInt32 ();
+                int archiveSize   = decompressedContents.ReadInt32 ();
+
+                TzarFiles = new List<TzarFileInfo> (numberOfFiles);
+
+                TzarFileInfo previousFileInfo = null;
+
+                for (int i = 0; i < numberOfFiles; i++)
+                {
+                    int     nameLength         = decompressedContents.ReadByte ();
+                    int     nameReuseLength    = decompressedContents.ReadByte ();
+                    string  fileName           = previousFileInfo != null ? previousFileInfo.Name.Substring (0, nameReuseLength) : "";
+                    fileName += new string (decompressedContents.ReadChars (nameLength - nameReuseLength));
+
+                    int fileOffset = decompressedContents.ReadInt32 ();
+                    int fileLength = decompressedContents.ReadInt32 ();
+
+                    var tzarFileInfo = new TzarFileInfo (fileName, nameLength, fileLength, fileOffset);
+                    previousFileInfo = tzarFileInfo;
+
+                    TzarFiles.Add (tzarFileInfo);
+                }
+            }
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */

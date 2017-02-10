@@ -4,6 +4,9 @@ namespace Librarian
 {
     struct Chapter
     {
+        // TODO: Check if we can actually work with ints instead of uint 
+        // (IMAGE.WDT is the biggest file. If we can handle it, we can 
+        // handle everything with ints).
         public uint StartPosition;
         public uint EndPosition;
         public uint Size;
