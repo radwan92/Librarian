@@ -6,6 +6,14 @@ namespace Librarian
     class Decompressor
     {
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        public void DecFileTest (string wdtPath)
+        {
+            var book = new Book (wdtPath);
+
+            Lzss.GetFile (book.TableOfContents[1], book);
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public void DecompressWdtTest (string filePath)
         {
             // SETUP: Two versions of the WDT file should be located at filePath -

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 namespace Librarian
@@ -8,8 +7,7 @@ namespace Librarian
     {
         public static readonly int CONTENTS_OFFSET = 0x20;
 
-        public List<TzarFileInfo> TzarFiles;
-
+        List<TzarFileInfo> m_tzarFiles;
         Book m_book;
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
@@ -17,11 +15,17 @@ namespace Librarian
         {
             m_book = book;
 
-            ReadThenDecompressAndParse ();            
+            DecompressAndParse ();            
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void ReadThenDecompressAndParse ()
+        public TzarFileInfo this[int index]
+        {
+            get { return m_tzarFiles[index]; }
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        void DecompressAndParse ()
         {
             Chapter contentsChapter = m_book.ChapterList[0];
             int unused; // TODO: Remove. Temporary solution
@@ -35,7 +39,7 @@ namespace Librarian
                 int numberOfFiles = decompressedContents.ReadInt32 ();
                 int archiveSize   = decompressedContents.ReadInt32 ();
 
-                TzarFiles = new List<TzarFileInfo> (numberOfFiles);
+                m_tzarFiles = new List<TzarFileInfo> (numberOfFiles);
 
                 TzarFileInfo previousFileInfo = null;
 
@@ -52,7 +56,7 @@ namespace Librarian
                     var tzarFileInfo = new TzarFileInfo (fileName, nameLength, fileLength, fileOffset);
                     previousFileInfo = tzarFileInfo;
 
-                    TzarFiles.Add (tzarFileInfo);
+                    m_tzarFiles.Add (tzarFileInfo);
                 }
             }
         }

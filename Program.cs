@@ -18,6 +18,7 @@ namespace Librarian
             {
                 Decompressor d = new Decompressor ();
                 d.DecompressWdtTest (wdtPath);
+                //d.DecFileTest (wdtPath);
             }
 
             Console.WriteLine ();

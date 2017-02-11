@@ -4,14 +4,14 @@
     {
         public int      NameLength      { get; set; }
         public string   Name            { get; set; }
-        public int      Length          { get; set; }
+        public int      Size            { get; set; }
         public int      Offset          { get; set; }
 
-        public TzarFileInfo (string name, int nameLength, int length, int offset)
+        public TzarFileInfo (string name, int nameLength, int size, int offset)
         {
             Name            = name;
             NameLength      = nameLength;
-            Length          = length;
+            Size            = size;
             Offset          = offset;
         }
     }

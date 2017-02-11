@@ -1,10 +1,21 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace Librarian
 {
     class Lzss
     {
+        public static byte[] GetFile (TzarFileInfo fileInfo, Book book)
+        {
+            byte[] fileBuffer = new byte[fileInfo.Size];
+
+            int startChapter = fileInfo.Offset / book.PageSize;
+            int chapterCount = fileInfo.Size / book.PageSize;
+
+            // This is a very crude, test implementation.
+
+            return fileBuffer;
+        }
+
         public static byte[] Decompress (Book book, Chapter chapter, out int byteCount)
         {
             var decompressBuffer            = new byte[book.ChapterBufferSize + 40];  // Additional safety bytes for LZSS
@@ -20,7 +31,6 @@ namespace Librarian
                 uint        processedValue    = 0;
                 int         bytesDecompressed = 0;
                 bool        carryFlag         = false;
-                //Func<bool> isEOF = () => bytesDecompressed >= chapter.Size - 1;    // TODO: Inline this
 
                 using (var bookStream = new FileStream (book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
@@ -49,6 +59,9 @@ namespace Librarian
 
                     processedValue = BinaryUtils.SwapBytes (processedValue);
                     decompressedWriter.Write ((byte)processedValue);
+
+                    if (decompressedPartStream.Position >= book.PageSize)
+                        goto endOfFile;
                 }
 
                 BinaryUtils.AddAndSetCarryFlag (ref shifter, 0x2001, ref carryFlag);

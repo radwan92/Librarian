@@ -14,7 +14,7 @@
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public static void AddAndSetCarryFlag (ref ushort value, ushort add, ref bool carryFlag)
         {
-            if (value == 57351)
+            if (value == 57351) // TODO: Inline this whole method as this is shamelessly hardcoded and misleading now
             {
                 value += add;
                 carryFlag = true;
