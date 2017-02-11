@@ -23,32 +23,9 @@ namespace Librarian
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         void ReadThenDecompressAndParse ()
         {
-            byte[]  contentDecompressed;
-            Chapter contentsChapter;
-
-            using (var fileStream = new FileStream (m_book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var reader = new BinaryReader (fileStream);
-                fileStream.Seek (Book.HEADER_LENGTH, SeekOrigin.Begin);  // Get past header
-
-                // Had to hardcode size + 1 and the 0xAB at the end due to c++ malloc (to fully replicate arch.exe behaviour)
-                // More on this: https://msdn.microsoft.com/en-us/library/ms220938%28v=vs.80%29.aspx?f=255&MSPPError=-2147217396
-                // OR DO WE REALLY?
-                contentDecompressed = new byte[m_book.ChapterBufferSize + 1];
-                //contentDecompressed[m_book.ChapterBufferSize] = 0xAB;
-
-                contentsChapter = m_book.ChapterList[0];
-                int chapterCopyOffset = (int)(m_book.ChapterBufferSize - contentsChapter.Size);
-
-                contentsChapter.PrintInfo ();
-                DebugUtils.PrintHex (chapterCopyOffset, 8, "Chapter copy offset", 1);
-
-                fileStream.Seek (contentsChapter.StartPosition, SeekOrigin.Begin);
-                fileStream.Read (contentDecompressed, chapterCopyOffset, (int)contentsChapter.Size);
-            }
-
+            Chapter contentsChapter = m_book.ChapterList[0];
             int unused; // TODO: Remove. Temporary solution
-            LzssDecompressor.Decompress (contentDecompressed, contentsChapter, out unused);
+            byte[] contentDecompressed = Lzss.Decompress (m_book, contentsChapter, out unused);
 
             using (var decompressedStream = new MemoryStream (contentDecompressed))
             {

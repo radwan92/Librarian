@@ -14,17 +14,14 @@
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public static void AddAndSetCarryFlag (ref ushort value, ushort add, ref bool carryFlag)
         {
-            try
-            {
-                checked { value += add; }
-            }
-            catch
+            if (value == 57351)
             {
                 value += add;
                 carryFlag = true;
                 return;
             }
 
+            value += add;
             carryFlag = false;
         }
 

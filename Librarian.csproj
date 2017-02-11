@@ -61,7 +61,7 @@
     <Compile Include="TzarFileInfo.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Decompressor.cs" />
-    <Compile Include="LzssDecompressor.cs" />
+    <Compile Include="Lzss.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Chapter.cs" />

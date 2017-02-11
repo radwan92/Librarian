@@ -29,27 +29,20 @@ namespace Librarian
             for (int i = 0; i < book.ChapterList.Count; i++)
             {
                 compareFile.Read (comparisonBuffer, 0, comparisonBuffer.Length);
-
-                var contentDecompressed = new byte[book.ChapterBufferSize + 40];  // Additional safety bytes for LZSS
-
                 var chapter = book.ChapterList[i];
-                int chapterCopyOffset = (int)(book.ChapterBufferSize - chapter.Size);
-
-                inFile.Seek (chapter.StartPosition, SeekOrigin.Begin);
-                inFile.Read (contentDecompressed, chapterCopyOffset, (int)chapter.Size);
 
                 int byteCount;
-                LzssDecompressor.Decompress (contentDecompressed, chapter, out byteCount);
+                var contentDecompressed = Lzss.Decompress (book, chapter, out byteCount);
 
                 Console.WriteLine (string.Format ("Chapter: {0} Start: {3:X} End: {4:X} Size: {1} Bytes: {2}", i, chapter.Size, byteCount, chapter.StartPosition, chapter.EndPosition));
 
-                byteCount = Math.Min ((int)book.PageSize, byteCount);
+                byteCount = Math.Min (book.PageSize, byteCount);
 
                 for (int x = 0; x < byteCount; x++)
                 {
                     if (comparisonBuffer[x] != contentDecompressed[x])
                     {
-                        int misPos = (int)book.PageSize * i + x;
+                        int misPos = book.PageSize * i + x;
                         DebugUtils.PrintHex (misPos, 0, "Byte mis at");
                         DebugUtils.PrintHex (comparisonBuffer[i], 0, "Original");
                         DebugUtils.PrintHex (contentDecompressed[i], 0, "Ours");

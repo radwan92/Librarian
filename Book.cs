@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Librarian
 {
@@ -7,18 +8,16 @@ namespace Librarian
         public static readonly int HEADER_LENGTH = 0xE;
 
         // Somewhat unknown constants
-        static readonly uint m_mlp = 9;
-        static readonly uint m_dir = 8;
-        static readonly uint m_uar = 2;
+        static readonly int m_mlp = 9;
+        static readonly int m_dir = 8;
+        static readonly int m_uar = 2;
 
         public string   Path;
         public string   CompressionType;
-        public uint     PageSize;
-        public int      BitLengths;
+        public int      PageSize;
         public int      SizeCompressed;
-        public uint     SizeDecompressed;
-        public uint     ChapterBufferSize;
-        public int      UnkArgument;
+        public int      SizeDecompressed;
+        public int      ChapterBufferSize;
 
         public TableOfContents  TableOfContents;
         public ChapterList      ChapterList;
@@ -34,10 +33,11 @@ namespace Librarian
 
                 CompressionType  = new string (reader.ReadChars (4));
                 SizeCompressed   = (int)fileStream.Length;
-                SizeDecompressed = reader.ReadUInt32 ();
-                PageSize         = reader.ReadUInt32 ();
-                BitLengths       = Utils.GetBitLenghts (reader.ReadByte ());
-                UnkArgument      = reader.ReadByte ();
+                SizeDecompressed = reader.ReadInt32 ();
+                PageSize         = reader.ReadInt32 ();
+
+                // There are 2 additional bytes in the header - bit lengths and some unknown argument.
+                // Both seem to be unused, so we skip them
             }
 
             ChapterBufferSize = m_mlp * PageSize / m_dir + m_uar;
@@ -51,12 +51,10 @@ namespace Librarian
         public void PrintBasicInfo ()
         {
             // TODO: Push/Pop indent
-            System.Console.WriteLine ();
+            Console.WriteLine ();
             DebugUtils.PrintHex (SizeCompressed, 8, "Compressed book size", 2);
             DebugUtils.PrintHex (SizeDecompressed, 8, "Decompressed book size", 2);
             DebugUtils.PrintHex (PageSize, 8, "Page Size", 3);
-            DebugUtils.PrintHex (BitLengths, 2, "Bit Lengths", 3);
-            DebugUtils.PrintHex (UnkArgument, 2, "Unk arg", 3);
             DebugUtils.PrintHex (ChapterBufferSize, 8, "Chapter buffer size");
         }
     }

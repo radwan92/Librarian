@@ -17,21 +17,21 @@ namespace Librarian
                 fileStream.Seek (Book.HEADER_LENGTH, SeekOrigin.Begin);
                 var reader = new BinaryReader (fileStream);
 
-                uint firstChapterPosition   = reader.ReadUInt32 ();
-                int chapterCount            = (int)(firstChapterPosition - Book.HEADER_LENGTH) / 4 - 1;
+                int firstChapterPosition   = reader.ReadInt32 ();
+                int chapterCount           = (firstChapterPosition - Book.HEADER_LENGTH) / 4 - 1;
 
                 m_chapters = new List<Chapter> (chapterCount);
 
-                uint previousChapterEndPosition = firstChapterPosition;
+                int previousChapterEndPosition = firstChapterPosition;
 
                 for (int i = 0; i < chapterCount; i++)
                 {
-                    uint chapterEndPosition = reader.ReadUInt32 ();
+                    int chapterEndPosition = reader.ReadInt32 ();
                     m_chapters.Add (new Chapter (previousChapterEndPosition, chapterEndPosition));
                     previousChapterEndPosition = chapterEndPosition;
                 }
 
-                m_chapters.Add (new Chapter (previousChapterEndPosition, (uint)fileStream.Length));     // Last chapter end position = book end
+                m_chapters.Add (new Chapter (previousChapterEndPosition, (int)fileStream.Length));     // Last chapter end position = book end
             }
         }
 

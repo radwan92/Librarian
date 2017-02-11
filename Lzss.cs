@@ -3,11 +3,12 @@ using System.IO;
 
 namespace Librarian
 {
-    class LzssDecompressor
+    class Lzss
     {
-        public static void Decompress (byte[] decompressBuffer, Chapter sourceChapter, out int byteCount)
+        public static byte[] Decompress (Book book, Chapter chapter, out int byteCount)
         {
-            int compressedPartStartPosition = 0x9002 - (int)sourceChapter.Size;
+            var decompressBuffer            = new byte[book.ChapterBufferSize + 40];  // Additional safety bytes for LZSS
+            int compressedPartStartPosition = book.ChapterBufferSize - chapter.Size;
 
             // TODO: Cleanup gotos -> decompose the method
             var compressedPartStream      = new MemoryStream (decompressBuffer);
@@ -19,10 +20,16 @@ namespace Librarian
                 uint        processedValue    = 0;
                 int         bytesDecompressed = 0;
                 bool        carryFlag         = false;
-                Func<bool>  isEOF             = () => bytesDecompressed >= sourceChapter.Size - 1;
+                //Func<bool> isEOF = () => bytesDecompressed >= chapter.Size - 1;    // TODO: Inline this
+
+                using (var bookStream = new FileStream (book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    bookStream.Seek (chapter.StartPosition, SeekOrigin.Begin);
+                    bookStream.Read (decompressBuffer, compressedPartStartPosition, chapter.Size);
+                }
 
                 mainPart:
-                while (!isEOF ())
+                while (bytesDecompressed < chapter.Size - 1)
                 {
                     compressedPartStream.Seek (compressedPartStartPosition + bytesDecompressed, SeekOrigin.Begin);
 
@@ -62,7 +69,7 @@ namespace Librarian
 
                         decompressedWriter.Seek ((int)processedValue + 2, SeekOrigin.Current);
 
-                        if (isEOF ())
+                        if (bytesDecompressed < chapter.Size - 1)
                             goto endOfFile;
                         else
                             goto mainPart;
@@ -97,7 +104,7 @@ namespace Librarian
                     processedValue--;
                 }
 
-                if (!isEOF ())
+                if (bytesDecompressed < chapter.Size - 1)
                     goto mainPart;
 
                 endOfFile:
@@ -106,6 +113,8 @@ namespace Librarian
 
             compressedPartStream.Dispose ();
             decompressedPartStream.Dispose ();
+
+            return decompressBuffer;
         }
     }
 }
