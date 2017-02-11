@@ -1,143 +1,66 @@
-﻿namespace Librarian
+﻿using System.IO;
+using System;
+
+namespace Librarian
 {
     class Decompressor
     {
-        Book m_book;
-
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public void DecompressWdt (string filePath)
+        public void DecompressWdtTest (string filePath)
         {
-            m_book = new Book (filePath);
-            
-            ///* ================================================================================================================================== */
-            //// LZSS DECOMPRESSION
-            ///* ================================================================================================================================== */
-            //// TODO: Cleanup gotos -> decompose the method
-            //var headerHighStream       = new MemoryStream (decompHeader);
-            //var headerLowStream        = new MemoryStream (decompHeader);
-            //var binaryHeaderHighReader = new BinaryReader (headerHighStream);
-            //var binaryHeaderLowWriter  = new BinaryWriter (headerLowStream);
-            //{
-            //    ushort      shifter           = 0;
-            //    uint        processedValue    = 0;
-            //    int         bytesDecompressed = 0;
-            //    bool        carryFlag         = false;
-            //    Func<bool>  isEOF             = () => bytesDecompressed >= decompHighPartLength - 1;
+            // SETUP: Two versions of the WDT file should be located at filePath -
+            // decompressed (with *.dcm extensions) and compressed (with *.cmp extensions)
+            // Decompressor will produce another decompressed file with extensions *.xxx
+            // Provided decompressed version will be used to test decompression correctness
 
-            //    Console.WriteLine ();
+            string comprExt = "cmp";
+            string decmpExt = "dcm";
 
-            //mainPart:
-            //    while (!isEOF ())
-            //    {
-            //        headerHighStream.Seek (decompLowPartLength + bytesDecompressed, SeekOrigin.Begin);
+            filePath = Path.ChangeExtension (filePath, comprExt);
 
-            //        processedValue = BinaryUtils.SwapBytes (binaryHeaderHighReader.ReadUInt32());
+            var book = new Book (filePath);
 
-            //        processedValue = processedValue << (byte)shifter;
-            //        bool isShiftCarry = (processedValue & 0x80000000) > 0;
-            //        processedValue = processedValue << 1;
+            var inFile      = File.OpenRead (filePath);
+            var compareFile = File.OpenRead (Path.ChangeExtension (filePath, decmpExt));
+            var outFile     = File.Create (Path.ChangeExtension (filePath, "xxx"));
 
-            //        if (!isShiftCarry)
-            //            break;
+            byte[] comparisonBuffer = new byte[book.PageSize];
 
-            //        BinaryUtils.AddAndSetCarryFlag (ref shifter, 0x2001, ref carryFlag);
-            //        bytesDecompressed += carryFlag ? 2 : 1;
+            for (int i = 0; i < book.ChapterList.Count; i++)
+            {
+                compareFile.Read (comparisonBuffer, 0, comparisonBuffer.Length);
 
-            //        shifter = (ushort)(shifter & 0xFF07);
+                var contentDecompressed = new byte[book.ChapterBufferSize + 40];  // Additional safety bytes for LZSS
 
-            //        processedValue = BinaryUtils.SwapBytes (processedValue);
-            //        binaryHeaderLowWriter.Write ((byte)processedValue);
-            //    }
+                var chapter = book.ChapterList[i];
+                int chapterCopyOffset = (int)(book.ChapterBufferSize - chapter.Size);
 
-            //    BinaryUtils.AddAndSetCarryFlag (ref shifter, 0x2001, ref carryFlag);
-            //    BinaryUtils.AddWithCarry (ref bytesDecompressed, 2, carryFlag);
-            //    shifter = (ushort)(shifter & 0xFF07);
+                inFile.Seek (chapter.StartPosition, SeekOrigin.Begin);
+                inFile.Read (contentDecompressed, chapterCopyOffset, (int)chapter.Size);
 
-            //    uint helper = (processedValue >> 0x14);
+                int byteCount;
+                LzssDecompressor.Decompress (contentDecompressed, chapter, out byteCount);
 
-            //    {
-            //        bool shrCarryFlag = false;
-            //        if ((helper & 0x80000) > 0)
-            //            shrCarryFlag = true;
+                Console.WriteLine (string.Format ("Chapter: {0} Start: {3:X} End: {4:X} Size: {1} Bytes: {2}", i, chapter.Size, byteCount, chapter.StartPosition, chapter.EndPosition));
 
-            //        if (shrCarryFlag)
-            //        {
-            //            processedValue &= 0xF0000;
-            //            processedValue = processedValue >> 0x10;
+                byteCount = Math.Min ((int)book.PageSize, byteCount);
 
-            //            binaryHeaderLowWriter.Seek ((int)processedValue + 2, SeekOrigin.Current);
+                for (int x = 0; x < byteCount; x++)
+                {
+                    if (comparisonBuffer[x] != contentDecompressed[x])
+                    {
+                        int misPos = (int)book.PageSize * i + x;
+                        DebugUtils.PrintHex (misPos, 0, "Byte mis at");
+                        DebugUtils.PrintHex (comparisonBuffer[i], 0, "Original");
+                        DebugUtils.PrintHex (contentDecompressed[i], 0, "Ours");
+                    }
+                }
 
-            //            if (isEOF ())
-            //                goto endOfFile;
-            //            else
-            //                goto mainPart;
-            //        }
-            //    }
+                outFile.Write (contentDecompressed, 0, byteCount);
+                outFile.Flush ();
+            }
 
-
-            //    {
-            //        processedValue &= 0xF0000;
-
-            //        bool shrCarryFlag = false;
-            //        if ((processedValue & 0x10000) > 0)
-            //            shrCarryFlag = true;
-
-            //        processedValue = processedValue >> 0x11;
-
-            //        if (shrCarryFlag)
-            //        {
-            //            byte someByte = decompHeader[binaryHeaderLowWriter.BaseStream.Position + helper - 0x1000];
-            //            binaryHeaderLowWriter.Write (someByte);
-            //        }
-            //    }
-
-
-            //    processedValue++;
-
-            //    while (processedValue > 0)
-            //    {
-            //        byte someByte = decompHeader[binaryHeaderLowWriter.BaseStream.Position + helper - 0x1000];
-            //        binaryHeaderLowWriter.Write (someByte);
-            //        someByte = decompHeader[binaryHeaderLowWriter.BaseStream.Position - 1 + helper - 0xFFF];
-            //        binaryHeaderLowWriter.Write (someByte);
-            //        processedValue--;
-            //    }
-
-            //    if (!isEOF ())
-            //        goto mainPart;
-
-            //endOfFile:
-            //        Console.WriteLine ("I LOVE GOTO xD");
-            //}
-
-            //// Reading files from decompressed header
-
-            //headerHighStream.Seek (0x20, SeekOrigin.Begin);
-
-            //int numberOfFiles = binaryHeaderHighReader.ReadInt32 ();
-            //int archiveSize = binaryHeaderHighReader.ReadInt32 ();
-
-            //var files = new List<HmmsysPackFile> (numberOfFiles);
-
-            //HmmsysPackFile previousFile = null;
-            //for (int i = 0; i < numberOfFiles; i++)
-            //{
-            //    int     nameLength         = binaryHeaderHighReader.ReadByte ();
-            //    int     nameReuseLength    = binaryHeaderHighReader.ReadByte ();
-            //    string  fileName           = previousFile != null ? previousFile.Name.Substring (0, nameReuseLength) : "";
-            //    fileName += new string (binaryHeaderHighReader.ReadChars (nameLength - nameReuseLength));
-
-            //    int fileOffset = binaryHeaderHighReader.ReadInt32 ();
-            //    int fileLength = binaryHeaderHighReader.ReadInt32 ();
-
-            //    var packFile = new HmmsysPackFile (fileName, nameLength, nameReuseLength, fileLength, fileOffset);
-            //    previousFile = packFile;
-
-            //    files.Add (packFile);
-            //}
-
-            //headerLowStream.Dispose ();
-            //headerHighStream.Dispose ();
+            outFile.Dispose ();
         }
     }
 }

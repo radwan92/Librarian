@@ -5,15 +5,15 @@ namespace Librarian
 {
     class LzssDecompressor
     {
-        public static void Decompress (byte[] decompressBuffer, Chapter sourceChapter)
+        public static void Decompress (byte[] decompressBuffer, Chapter sourceChapter, out int byteCount)
         {
-            int compressedPartStartPosition = decompressBuffer.Length - 1 - (int)sourceChapter.Size;
+            int compressedPartStartPosition = 0x9002 - (int)sourceChapter.Size;
 
             // TODO: Cleanup gotos -> decompose the method
-            var compressedPartStream    = new MemoryStream (decompressBuffer);
-            var decompressedPartStream  = new MemoryStream (decompressBuffer);
-            var compressedPart          = new BinaryReader (compressedPartStream);
-            var decompressedPart        = new BinaryWriter (decompressedPartStream);
+            var compressedPartStream      = new MemoryStream (decompressBuffer);
+            var decompressedPartStream    = new MemoryStream (decompressBuffer);
+            var compressedReader          = new BinaryReader (compressedPartStream);
+            var decompressedWriter        = new BinaryWriter (decompressedPartStream);
             {
                 ushort      shifter           = 0;
                 uint        processedValue    = 0;
@@ -26,7 +26,7 @@ namespace Librarian
                 {
                     compressedPartStream.Seek (compressedPartStartPosition + bytesDecompressed, SeekOrigin.Begin);
 
-                    processedValue = BinaryUtils.SwapBytes (compressedPart.ReadUInt32 ());
+                    processedValue = BinaryUtils.SwapBytes (compressedReader.ReadUInt32 ());
 
                     processedValue = processedValue << (byte)shifter;
                     bool isShiftCarry = (processedValue & 0x80000000) > 0;
@@ -41,7 +41,7 @@ namespace Librarian
                     shifter = (ushort)(shifter & 0xFF07);
 
                     processedValue = BinaryUtils.SwapBytes (processedValue);
-                    decompressedPart.Write ((byte)processedValue);
+                    decompressedWriter.Write ((byte)processedValue);
                 }
 
                 BinaryUtils.AddAndSetCarryFlag (ref shifter, 0x2001, ref carryFlag);
@@ -60,7 +60,7 @@ namespace Librarian
                         processedValue &= 0xF0000;
                         processedValue = processedValue >> 0x10;
 
-                        decompressedPart.Seek ((int)processedValue + 2, SeekOrigin.Current);
+                        decompressedWriter.Seek ((int)processedValue + 2, SeekOrigin.Current);
 
                         if (isEOF ())
                             goto endOfFile;
@@ -81,8 +81,8 @@ namespace Librarian
 
                     if (shrCarryFlag)
                     {
-                        byte someByte = decompressBuffer[decompressedPart.BaseStream.Position + helper - 0x1000];
-                        decompressedPart.Write (someByte);
+                        byte someByte = decompressBuffer[decompressedPartStream.Position + helper - 0x1000];
+                        decompressedWriter.Write (someByte);
                     }
                 }
 
@@ -90,10 +90,10 @@ namespace Librarian
 
                 while (processedValue > 0)
                 {
-                    byte someByte = decompressBuffer[decompressedPart.BaseStream.Position + helper - 0x1000];
-                    decompressedPart.Write (someByte);
-                    someByte = decompressBuffer[decompressedPart.BaseStream.Position - 1 + helper - 0xFFF];
-                    decompressedPart.Write (someByte);
+                    byte someByte = decompressBuffer[decompressedPartStream.Position + helper - 0x1000];
+                    decompressedWriter.Write (someByte);
+                    someByte = decompressBuffer[decompressedPartStream.Position - 1 + helper - 0xFFF];
+                    decompressedWriter.Write (someByte);
                     processedValue--;
                 }
 
@@ -101,8 +101,11 @@ namespace Librarian
                     goto mainPart;
 
                 endOfFile:
-                    Console.WriteLine ("I LOVE GOTO xD");
+                    byteCount = (int)decompressedPartStream.Position;
             }
+
+            compressedPartStream.Dispose ();
+            decompressedPartStream.Dispose ();
         }
     }
 }

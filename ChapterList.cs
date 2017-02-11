@@ -5,6 +5,8 @@ namespace Librarian
 {
     class ChapterList
     {
+        public int Count { get { return m_chapters.Count; } }
+
         List<Chapter> m_chapters;
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
@@ -28,6 +30,8 @@ namespace Librarian
                     m_chapters.Add (new Chapter (previousChapterEndPosition, chapterEndPosition));
                     previousChapterEndPosition = chapterEndPosition;
                 }
+
+                m_chapters.Add (new Chapter (previousChapterEndPosition, (uint)fileStream.Length));     // Last chapter end position = book end
             }
         }
 

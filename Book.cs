@@ -6,12 +6,18 @@ namespace Librarian
     {
         public static readonly int HEADER_LENGTH = 0xE;
 
+        // Somewhat unknown constants
+        static readonly uint m_mlp = 9;
+        static readonly uint m_dir = 8;
+        static readonly uint m_uar = 2;
+
         public string   Path;
         public string   CompressionType;
         public uint     PageSize;
         public int      BitLengths;
         public int      SizeCompressed;
         public uint     SizeDecompressed;
+        public uint     ChapterBufferSize;
         public int      UnkArgument;
 
         public TableOfContents  TableOfContents;
@@ -34,6 +40,8 @@ namespace Librarian
                 UnkArgument      = reader.ReadByte ();
             }
 
+            ChapterBufferSize = m_mlp * PageSize / m_dir + m_uar;
+
             // Order is of importance here (TableOfContents depends on ChapterList)
             ChapterList     = new ChapterList (this);
             TableOfContents = new TableOfContents (this);
@@ -49,6 +57,7 @@ namespace Librarian
             DebugUtils.PrintHex (PageSize, 8, "Page Size", 3);
             DebugUtils.PrintHex (BitLengths, 2, "Bit Lengths", 3);
             DebugUtils.PrintHex (UnkArgument, 2, "Unk arg", 3);
+            DebugUtils.PrintHex (ChapterBufferSize, 8, "Chapter buffer size");
         }
     }
 }
