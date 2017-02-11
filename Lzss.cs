@@ -18,12 +18,19 @@ namespace Librarian
 
         public static byte[] Decompress (Book book, Chapter chapter, out int byteCount)
         {
-            var decompressBuffer            = new byte[book.ChapterBufferSize + 40];  // Additional safety bytes for LZSS
-            int compressedPartStartPosition = book.ChapterBufferSize - chapter.Size;
+            byte[] decompressedBuffer = new byte[book.PageSize]; // TEMP: We will replase buffer with a sink stream
 
-            // TODO: Cleanup gotos -> decompose the method
-            var compressedPartStream      = new MemoryStream (decompressBuffer);
-            var decompressedPartStream    = new MemoryStream (decompressBuffer);
+            var compressedBuffer = new byte[chapter.Size + 40];  // Additional safety bytes for LZSS
+            using (var bookStream = new FileStream (book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                bookStream.Seek (chapter.StartPosition, SeekOrigin.Begin);
+                bookStream.Read (compressedBuffer, 0, chapter.Size);
+            }
+
+            // TODO: Cleanup gotosl; decompose the method
+            var compressedPartStream = new MemoryStream (compressedBuffer);
+            var decompressedPartStream = new MemoryStream (decompressedBuffer);
+
             var compressedReader          = new BinaryReader (compressedPartStream);
             var decompressedWriter        = new BinaryWriter (decompressedPartStream);
             {
@@ -32,16 +39,10 @@ namespace Librarian
                 int         bytesDecompressed = 0;
                 bool        carryFlag         = false;
 
-                using (var bookStream = new FileStream (book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    bookStream.Seek (chapter.StartPosition, SeekOrigin.Begin);
-                    bookStream.Read (decompressBuffer, compressedPartStartPosition, chapter.Size);
-                }
-
                 mainPart:
                 while (bytesDecompressed < chapter.Size - 1)
                 {
-                    compressedPartStream.Seek (compressedPartStartPosition + bytesDecompressed, SeekOrigin.Begin);
+                    compressedPartStream.Seek (bytesDecompressed, SeekOrigin.Begin);
 
                     processedValue = BinaryUtils.SwapBytes (compressedReader.ReadUInt32 ());
 
@@ -101,7 +102,7 @@ namespace Librarian
 
                     if (shrCarryFlag)
                     {
-                        byte someByte = decompressBuffer[decompressedPartStream.Position + helper - 0x1000];
+                        byte someByte = decompressedBuffer[decompressedPartStream.Position + helper - 0x1000];
                         decompressedWriter.Write (someByte);
                     }
                 }
@@ -110,9 +111,9 @@ namespace Librarian
 
                 while (processedValue > 0)
                 {
-                    byte someByte = decompressBuffer[decompressedPartStream.Position + helper - 0x1000];
+                    byte someByte = decompressedBuffer[decompressedPartStream.Position + helper - 0x1000];
                     decompressedWriter.Write (someByte);
-                    someByte = decompressBuffer[decompressedPartStream.Position - 1 + helper - 0xFFF];
+                    someByte = decompressedBuffer[decompressedPartStream.Position - 1 + helper - 0xFFF];
                     decompressedWriter.Write (someByte);
                     processedValue--;
                 }
@@ -127,7 +128,7 @@ namespace Librarian
             compressedPartStream.Dispose ();
             decompressedPartStream.Dispose ();
 
-            return decompressBuffer;
+            return decompressedBuffer;
         }
     }
 }
