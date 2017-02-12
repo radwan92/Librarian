@@ -42,7 +42,9 @@ namespace Librarian
                 var chapter = book.ChapterList[i];
 
                 int byteCount;
-                var contentDecompressed = Lzss.Decompress (book, chapter, out byteCount);
+                byte[] contentDecompressed = new byte[book.PageSize];
+                var memStream = new MemoryStream (contentDecompressed);
+                Lzss.Decompress (book, chapter, memStream, out byteCount);
 
                 Console.WriteLine (string.Format ("Chapter: {0} Start: {3:X} End: {4:X} Size: {1} Bytes: {2}", i, chapter.Size, byteCount, chapter.StartPosition, chapter.EndPosition));
 

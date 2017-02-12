@@ -29,7 +29,9 @@ namespace Librarian
         {
             Chapter contentsChapter = m_book.ChapterList[0];
             int unused; // TODO: Remove. Temporary solution
-            byte[] contentDecompressed = Lzss.Decompress (m_book, contentsChapter, out unused);
+            byte[] contentDecompressed = new byte [m_book.PageSize];
+            var memStream = new MemoryStream (contentDecompressed);
+            Lzss.Decompress (m_book, contentsChapter, memStream, out unused);
 
             using (var decompressedStream = new MemoryStream (contentDecompressed))
             {
