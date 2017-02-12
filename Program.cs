@@ -17,8 +17,8 @@ namespace Librarian
             if (TryGetWdtPath (out wdtPath))
             {
                 Decompressor d = new Decompressor ();
-                d.DecompressWdtTest (wdtPath);
-                //d.DecFileTest (wdtPath);
+                //d.DecompressWdtTest (wdtPath);
+                d.DecFileTest (wdtPath);
             }
 
             Console.WriteLine ();

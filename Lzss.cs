@@ -8,16 +8,26 @@ namespace Librarian
         {
             byte[] fileBuffer = new byte[fileInfo.Size];
 
-            int startChapter = fileInfo.Offset / book.PageSize;
-            int chapterCount = fileInfo.Size / book.PageSize;
+            int fileStartChapter = fileInfo.Offset / book.PageSize;
+            int fileStartOffset  = fileInfo.Offset % book.PageSize;
+            int fileChapterSpan  = (fileInfo.Size + fileStartOffset) / book.PageSize + 1;
 
-            // This is a very crude, test implementation.
+            byte[] chaptersBuffer = new byte[fileChapterSpan * book.PageSize];
+            var chaptersStream = new MemoryStream (chaptersBuffer);
+
+            for (int i = 0; i < fileChapterSpan; i++)
+                Decompress (book, book.ChapterList[fileStartChapter + i], chaptersStream);
+
+            chaptersStream.Seek (fileStartOffset, SeekOrigin.Begin);
+            chaptersStream.Read (fileBuffer, 0, fileInfo.Size);
 
             return fileBuffer;
         }
 
-        public static void Decompress (Book book, Chapter chapter, Stream outStream, out int byteCount)
+        public static int Decompress (Book book, Chapter chapter, Stream outStream)
         {
+            int decompressedSize;
+
             var compressedBuffer = new byte[chapter.Size + 16];  // Additional safety bytes for LZSS
             using (var bookStream = new FileStream (book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
@@ -30,10 +40,11 @@ namespace Librarian
             var compressedReader          = new BinaryReader (compressedPartStream);
             var decompressedWriter        = new BinaryWriter (outStream);
             {
-                ushort      shifter           = 0;
-                uint        processedValue    = 0;
-                int         bytesDecompressed = 0;
-                bool        carryFlag         = false;
+                ushort      shifter               = 0;
+                uint        processedValue        = 0;
+                int         bytesDecompressed     = 0;
+                bool        carryFlag             = false;
+                long        outStreamBasePosition = outStream.Position;
 
                 mainPart:
                 while (bytesDecompressed < chapter.Size - 1)
@@ -57,7 +68,7 @@ namespace Librarian
                     processedValue = BinaryUtils.SwapBytes (processedValue);
                     decompressedWriter.Write ((byte)processedValue);
 
-                    if (outStream.Position >= book.PageSize)
+                    if ((outStream.Position - outStreamBasePosition) >= book.PageSize)
                         goto endOfFile;
                 }
 
@@ -77,7 +88,7 @@ namespace Librarian
                         processedValue &= 0xF0000;
                         processedValue = processedValue >> 0x10;
 
-                        decompressedWriter.Seek ((int)processedValue + 2, SeekOrigin.Current);
+                        decompressedWriter.Seek ((int)(outStreamBasePosition + processedValue) + 2, SeekOrigin.Current);
 
                         if (bytesDecompressed < chapter.Size - 1)
                             goto endOfFile;
@@ -128,10 +139,12 @@ namespace Librarian
                     goto mainPart;
 
                 endOfFile:
-                    byteCount = (int)outStream.Position;
+                    decompressedSize = (int)(outStream.Position - outStreamBasePosition);
             }
 
             compressedPartStream.Dispose ();
+
+            return decompressedSize;
         }
     }
 }

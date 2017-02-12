@@ -19,6 +19,12 @@ namespace Librarian
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        public int Count
+        {
+            get { return m_tzarFiles.Count; }
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public TzarFileInfo this[int index]
         {
             get { return m_tzarFiles[index]; }
@@ -28,10 +34,9 @@ namespace Librarian
         void DecompressAndParse ()
         {
             Chapter contentsChapter = m_book.ChapterList[0];
-            int unused; // TODO: Remove. Temporary solution
             byte[] contentDecompressed = new byte [m_book.PageSize];
             var memStream = new MemoryStream (contentDecompressed);
-            Lzss.Decompress (m_book, contentsChapter, memStream, out unused);
+            Lzss.Decompress (m_book, contentsChapter, memStream);
 
             using (var decompressedStream = new MemoryStream (contentDecompressed))
             {
@@ -49,13 +54,13 @@ namespace Librarian
                 {
                     int     nameLength         = decompressedContents.ReadByte ();
                     int     nameReuseLength    = decompressedContents.ReadByte ();
-                    string  fileName           = previousFileInfo != null ? previousFileInfo.Name.Substring (0, nameReuseLength) : "";
-                    fileName += new string (decompressedContents.ReadChars (nameLength - nameReuseLength));
+                    string  filePath           = previousFileInfo != null ? previousFileInfo.Path.Substring (0, nameReuseLength) : "";
+                    filePath += new string (decompressedContents.ReadChars (nameLength - nameReuseLength));
 
                     int fileOffset = decompressedContents.ReadInt32 ();
                     int fileLength = decompressedContents.ReadInt32 ();
 
-                    var tzarFileInfo = new TzarFileInfo (fileName, nameLength, fileLength, fileOffset);
+                    var tzarFileInfo = new TzarFileInfo (filePath, nameLength, fileLength, fileOffset);
                     previousFileInfo = tzarFileInfo;
 
                     m_tzarFiles.Add (tzarFileInfo);

@@ -12,7 +12,23 @@ namespace Librarian
         {
             var book = new Book (wdtPath);
 
-            Lzss.GetFile (book.TableOfContents[1], book);
+            var outPath = Path.GetDirectoryName (wdtPath);
+
+            for (int i = 0; i < book.TableOfContents.Count; i++)
+                CreateFile (book, book.TableOfContents[i], outPath);
+
+            //CreateFile (book, book.TableOfContents[1], outPath);
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        void CreateFile (Book book, TzarFileInfo tzarFile, string outputDir)
+        {
+            Console.WriteLine (string.Format ("File: {0}", tzarFile.Path));
+            var fileBytes = Lzss.GetFile (tzarFile, book);
+
+            string fileDir = Path.GetDirectoryName (Path.Combine (outputDir, tzarFile.Path));
+            Directory.CreateDirectory (fileDir);
+            File.WriteAllBytes (Path.Combine (outputDir, tzarFile.Path), fileBytes);
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
@@ -41,16 +57,17 @@ namespace Librarian
                 compareFile.Read (comparisonBuffer, 0, comparisonBuffer.Length);
                 var chapter = book.ChapterList[i];
 
-                int byteCount;
                 byte[] contentDecompressed = new byte[book.PageSize];
                 var memStream = new MemoryStream (contentDecompressed);
-                Lzss.Decompress (book, chapter, memStream, out byteCount);
+                int decompressedSize = Lzss.Decompress (book, chapter, memStream);
 
-                Console.WriteLine (string.Format ("Chapter: {0} Start: {3:X} End: {4:X} Size: {1} Bytes: {2}", i, chapter.Size, byteCount, chapter.StartPosition, chapter.EndPosition));
+                Console.WriteLine (string.Format ("Chapter: {0} Start: {3:X} End: {4:X} Size: {1} Bytes: {2}", i, chapter.Size, decompressedSize, chapter.StartPosition, chapter.EndPosition));
 
-                byteCount = Math.Min (book.PageSize, byteCount);
+                decompressedSize = Math.Min (book.PageSize, decompressedSize);
 
-                for (int x = 0; x < byteCount; x++)
+                // TEMP: Byte-by-byte comparison of the original decompressed file against
+                // our decompressed file - just to be 100% sure that everything went right
+                for (int x = 0; x < decompressedSize; x++)
                 {
                     if (comparisonBuffer[x] != contentDecompressed[x])
                     {
@@ -61,7 +78,7 @@ namespace Librarian
                     }
                 }
 
-                outFile.Write (contentDecompressed, 0, byteCount);
+                outFile.Write (contentDecompressed, 0, decompressedSize);
                 outFile.Flush ();
             }
 
