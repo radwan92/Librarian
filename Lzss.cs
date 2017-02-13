@@ -4,6 +4,7 @@ namespace Librarian
 {
     class Lzss
     {
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public static byte[] GetFile (TzarFileInfo fileInfo, Book book)
         {
             byte[] fileBuffer = new byte[fileInfo.Size];
@@ -24,6 +25,7 @@ namespace Librarian
             return fileBuffer;
         }
 
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public static int Decompress (Book book, Chapter chapter, Stream outStream)
         {
             int decompressedSize;

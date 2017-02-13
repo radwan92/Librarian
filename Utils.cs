@@ -2,6 +2,7 @@
 {
     static class Utils
     {
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
         // TODO: Transform into switch (or evaluation if possible)
         static readonly byte[] m_bitLengthsTable =
         {
