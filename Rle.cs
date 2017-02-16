@@ -42,45 +42,24 @@ namespace Librarian
 
                 Array.Copy (BitConverter.GetBytes (arg2), 0, table, tableSize, 2);
 
-                int counter = 0;
-                int ecx = 0;
-
-                short x = table[counter * 4 + 4];
-                x -= table[counter * 4];
-                byte[] buffer = new byte[x];
-                rleStream.Read (buffer, 0, x);
-
-                bool dl = true;
-
-                if (dl)
+                bool dl = false;
+                for (int y = 0; y < imageHeight; y++)
                 {
-                    bool isFByteEmpty = buffer[0] == 0;
+                    short valueDif = table[y * 4 + 4];
+                    valueDif -= table[y * 4];
 
-                    if (isFByteEmpty)
-                        goto secondPart;
+                    byte[] buffer = new byte[valueDif];
+                    rleStream.Read (buffer, 0, valueDif);
 
-                    while (ecx < buffer[0])
+                    dl = true;
+
+                    for (int x = 0; x < buffer[0]; x++)
                     {
-                        bool isTypeSeven = rleHeader[0x18] == 7;
+                        int pix = (imageHeight - y - 1) * extWidth + y;
 
-                        if (!isTypeSeven)
-                            goto skipPart;
-
-                        int tempRow = imageHeight - counter - 1;
-                        tempRow *= extWidth;
-
-                        imageBuffer[tempRow] = 0;
-
-                        ecx++;
-                        counter++;
-
-                        skipPart:
-                            ;
+                        imageBuffer[pix] = 0;
                     }
                 }
-
-                secondPart:
-                    ;
             }
         }
     }
