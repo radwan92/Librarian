@@ -27,7 +27,7 @@ namespace Librarian
             string rlePath;
             if (TryGetFilePathFromTextFile (s_rlePathFileName, RLE_EXTENSION, out rlePath))
             {
-                Rle.Decompress (rlePath);
+                Rle.RleDecompressor.Decompress (rlePath);
             }
 
             Console.WriteLine ();

@@ -58,7 +58,9 @@
   <ItemGroup>
     <Compile Include="BinaryUtils.cs" />
     <Compile Include="DebugUtils.cs" />
-    <Compile Include="Rle.cs" />
+    <Compile Include="Rle\BmpFile.cs" />
+    <Compile Include="Rle\RleDecompressor.cs" />
+    <Compile Include="Rle\RleFile.cs" />
     <Compile Include="TzarFileInfo.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Decompressor.cs" />
