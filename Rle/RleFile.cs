@@ -88,22 +88,16 @@ namespace Librarian.Rle
         {
             ColorTable = new byte[ColorsInColorTable * 4];
 
-            float colorCoefficient = BitConverter.ToSingle (new byte[] { 0xE7, 0x9C, 0x03, 0x41 }, 0);
+            // This is probably for type 7 only...
+            double colorCoefficient = BitConverter.ToSingle (new byte[] { 0xE7, 0x9C, 0x03, 0x41 }, 0);
 
-            var c1 = (UnknownField_4 >> 0xA) & 0x1F;
+            float c1 = (UnknownField_4 >> 0xA) & 0x1F;
+            float c2 = (UnknownField_4 >> 0x5) & 0x1F;
+            float c3 = ((byte)UnknownField_4) & 0x1F;
 
-            float c1f = BitConverter.ToSingle (BitConverter.GetBytes (c1), 0) * colorCoefficient;
-            ColorTable[0] = (byte)((int) c1f);
-
-            var c2 = (UnknownField_4 >> 0x5) & 0x1F;
-
-            float c2f = BitConverter.ToSingle (BitConverter.GetBytes (c2), 0) * colorCoefficient;
-            ColorTable[1] = (byte)((int) c2f);
-
-            var c3 = ((byte)UnknownField_4) & 0x1F;
-
-            float c3f = BitConverter.ToSingle (BitConverter.GetBytes (c3), 0) * colorCoefficient;
-            ColorTable[2] = (byte)((int) c3f);
+            ColorTable[0] = (byte)((int) (c1 * colorCoefficient));
+            ColorTable[1] = (byte)((int) (c2 * colorCoefficient));
+            ColorTable[2] = (byte)((int) (c3 * colorCoefficient));
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */

@@ -38,9 +38,8 @@ namespace Librarian.Rle
             PixelsPerMeterY     = 0;
             ColorsInColorTable  = rle.ColorsInColorTable;
             ImportantColorCount = rle.ColorsInColorTable;
-
-            ColorTable  = new byte[ColorsInColorTable * 4];
-            ImageBuffer = imageBuffer;
+            ColorTable          = rle.ColorTable;
+            ImageBuffer         = imageBuffer;
 
             PixelArrayOffset = ColorTable.Length + 0x36;    // 0x36 = size of the header without color table
             FileSize         = PixelArrayOffset + ImageSize;
