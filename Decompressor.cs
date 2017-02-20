@@ -82,38 +82,12 @@ namespace Librarian
                 outFile.Flush ();
             }
 
-            // TEMP: Simple md5 comparison of the original file against our decompressed
-            // file. Clean up / move to a method / remove completely
-            using (var md5 = MD5.Create())
-            {
-                outFile.Seek (0, SeekOrigin.Begin);
-                compareFile.Seek (0, SeekOrigin.Begin);
-
-                var ours = md5.ComputeHash (outFile);
-                var theirs = md5.ComputeHash (compareFile);
-
-                var ourSum = ToHex (ours, true);
-                var theirSum = ToHex (theirs, true);
-
-                Console.WriteLine ();
-                Console.WriteLine ("OUR SUM:   " + ourSum);
-                Console.WriteLine ("THEIR SUM: " + theirSum);
-            }
-
             outFile.Dispose ();
             inFile.Dispose ();
             compareFile.Dispose ();
-        }
 
-        /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public static string ToHex(byte[] bytes, bool upperCase)
-        {
-            StringBuilder result = new StringBuilder(bytes.Length*2);
-
-            for (int i = 0; i < bytes.Length; i++)
-                result.Append(bytes[i].ToString(upperCase ? "X2" : "x2"));
-
-            return result.ToString();
+            bool areMd5Equal = ValidityUtils.AreMD5Equal (filePath, Path.ChangeExtension (filePath, decmpExt));
+            Console.WriteLine ("Are MD5 equal: " + areMd5Equal);
         }
     }
 }

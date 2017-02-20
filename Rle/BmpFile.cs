@@ -48,7 +48,7 @@ namespace Librarian.Rle
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public void WriteToFile (string filePath)
         {
-            using (var fileStream = File.OpenWrite (filePath))
+            using (var fileStream = new FileStream (filePath, FileMode.Create, FileAccess.Write))
             {
                 BinaryWriter writer = new BinaryWriter (fileStream);
 

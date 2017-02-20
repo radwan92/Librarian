@@ -7,8 +7,10 @@ namespace Librarian
     {
         public static readonly string RLE_EXTENSION = "RLE";
         public static readonly string WDT_EXTENSION = "WDT";
-        static readonly string s_wdtPathFileName = "wdtPath.txt";
-        static readonly string s_rlePathFileName = "rlePath.txt";
+
+        static readonly string s_wdtPathFileName       = "wdtPath.txt";
+        static readonly string s_rlePathFileName       = "rlePath.txt";
+        static readonly string s_rleTesterPathFileName = "refBmpPath.txt";
 
         /* ================================================================================================================================== */
         // ENTRY POINT
@@ -24,10 +26,12 @@ namespace Librarian
                 //d.DecFileTest (wdtPath);
             }
 
-            string rlePath;
-            if (TryGetFilePathFromTextFile (s_rlePathFileName, RLE_EXTENSION, out rlePath))
+            string projPath;
+            string refProjPath;
+            if (TryGetFilePathFromTextFile (s_rlePathFileName, RLE_EXTENSION, out projPath) && TryGetFilePathFromTextFile (s_rleTesterPathFileName, "REF", out refProjPath))
             {
-                Rle.RleDecompressor.Decompress (rlePath);
+                Rle.RleDecompressor.DecompressDirWithTest (projPath, refProjPath);
+                //Rle.RleDecompressor.Decompress (projPath);
             }
 
             Console.WriteLine ();
@@ -41,11 +45,11 @@ namespace Librarian
         {
             path = null;
 
-            string baseDirectory    = Path.GetDirectoryName (System.Reflection.Assembly.GetEntryAssembly ().Location);
-            string wdtPathFile      = Path.Combine (baseDirectory, textFileName);
-            string wdtPath          = null;
+            string baseDirectory = Path.GetDirectoryName (System.Reflection.Assembly.GetEntryAssembly ().Location);
+            string textFilePath  = Path.Combine (baseDirectory, textFileName);
+            string retrievedPath = null;
 
-            if (!File.Exists (wdtPathFile))
+            if (!File.Exists (textFilePath))
             {
                 Console.WriteLine (string.Format ("Text file {0} was not found in: {1}", textFileName, baseDirectory));
                 Console.WriteLine ();
@@ -55,7 +59,7 @@ namespace Librarian
 
             try
             {
-                wdtPath = File.ReadAllLines (wdtPathFile)[0];
+                retrievedPath = File.ReadAllLines (textFilePath)[0];
             }
             catch (Exception exception)
             {
@@ -63,13 +67,13 @@ namespace Librarian
                 return false;
             }
 
-            if (!File.Exists (wdtPath))
+            if (!File.Exists (retrievedPath) && !Directory.Exists (retrievedPath))
             {
-                Console.WriteLine (string.Format ("{0} file at: \n{1}\n specified in: \n{2}\n does not exist.", fileExtension, wdtPath, wdtPathFile));
+                Console.WriteLine (string.Format ("{0} file at: \n{1}\n specified in: \n{2}\n does not exist.", fileExtension, retrievedPath, textFilePath));
                 return false;
             }
 
-            path = wdtPath;
+            path = retrievedPath;
             return true;
         }
     }

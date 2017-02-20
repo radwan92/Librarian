@@ -71,6 +71,7 @@
     <Compile Include="ChapterList.cs" />
     <Compile Include="TableOfContents.cs" />
     <Compile Include="Book.cs" />
+    <Compile Include="ValidityUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
