@@ -1,23 +1,24 @@
 ﻿using System.IO;
+using Librarian.Utils;
 
-namespace Librarian
+namespace Librarian.Wdt
 {
-    class Lzss
+    public static class WdtDecompressor
     {
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public static byte[] GetFile (TzarFileInfo fileInfo, Book book)
+        public static byte[] DecompressTzarFile (TzarFile fileInfo, WdtFile wdtFile)
         {
             byte[] fileBuffer = new byte[fileInfo.Size];
 
-            int fileStartChapter = fileInfo.Offset / book.PageSize;
-            int fileStartOffset  = fileInfo.Offset % book.PageSize;
-            int fileChapterSpan  = (fileInfo.Size + fileStartOffset) / book.PageSize + 1;
+            int fileStartChapter = fileInfo.Offset / wdtFile.PageSize;
+            int fileStartOffset  = fileInfo.Offset % wdtFile.PageSize;
+            int fileChapterSpan  = (fileInfo.Size + fileStartOffset) / wdtFile.PageSize + 1;
 
-            byte[] chaptersBuffer = new byte[fileChapterSpan * book.PageSize];
+            byte[] chaptersBuffer = new byte[fileChapterSpan * wdtFile.PageSize];
             var chaptersStream = new MemoryStream (chaptersBuffer);
 
             for (int i = 0; i < fileChapterSpan; i++)
-                Decompress (book, book.ChapterList[fileStartChapter + i], chaptersStream);
+                DecompressChapter (wdtFile, wdtFile.ChapterList[fileStartChapter + i], chaptersStream);
 
             chaptersStream.Seek (fileStartOffset, SeekOrigin.Begin);
             chaptersStream.Read (fileBuffer, 0, fileInfo.Size);
@@ -26,15 +27,15 @@ namespace Librarian
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public static int Decompress (Book book, Chapter chapter, Stream outStream)
+        public static int DecompressChapter (WdtFile wdtFile, Chapter chapter, Stream outStream)
         {
             int decompressedSize;
 
             var compressedBuffer = new byte[chapter.Size + 16];  // Additional safety bytes for LZSS
-            using (var bookStream = new FileStream (book.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var wdtFileStream = new FileStream (wdtFile.Path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                bookStream.Seek (chapter.StartPosition, SeekOrigin.Begin);
-                bookStream.Read (compressedBuffer, 0, chapter.Size);
+                wdtFileStream.Seek (chapter.StartPosition, SeekOrigin.Begin);
+                wdtFileStream.Read (compressedBuffer, 0, chapter.Size);
             }
 
             // TODO: Cleanup gotos; decompose the method
@@ -62,7 +63,17 @@ namespace Librarian
                     if (!isShiftCarry)
                         break;
 
-                    BinaryUtils.AddAndSetCarryFlag (ref shifter, 0x2001, ref carryFlag);
+                    if (shifter == 57351)
+                    {
+                        shifter += 0x2001;
+                        carryFlag = true;
+                    }
+                    else
+                    {
+                        shifter += 0x2001;
+                        carryFlag = false;
+                    }
+
                     bytesDecompressed += carryFlag ? 2 : 1;
 
                     shifter = (ushort)(shifter & 0xFF07);
@@ -70,11 +81,21 @@ namespace Librarian
                     processedValue = BinaryUtils.SwapBytes (processedValue);
                     decompressedWriter.Write ((byte)processedValue);
 
-                    if ((outStream.Position - outStreamBasePosition) >= book.PageSize)
+                    if ((outStream.Position - outStreamBasePosition) >= wdtFile.PageSize)
                         goto endOfFile;
                 }
 
-                BinaryUtils.AddAndSetCarryFlag (ref shifter, 0x2001, ref carryFlag);
+                if (shifter == 57351)
+                {
+                    shifter += 0x2001;
+                    carryFlag = true;
+                }
+                else
+                {
+                    shifter += 0x2001;
+                    carryFlag = false;
+                }
+
                 BinaryUtils.AddWithCarry (ref bytesDecompressed, 2, carryFlag);
                 shifter = (ushort)(shifter & 0xFF07);
 

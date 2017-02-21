@@ -1,4 +1,4 @@
-﻿namespace Librarian
+﻿namespace Librarian.Utils
 {
     public static class BinaryUtils
     {

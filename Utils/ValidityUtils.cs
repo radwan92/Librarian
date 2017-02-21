@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Security.Cryptography;
 
-namespace Librarian
+namespace Librarian.Utils
 {
     public static class ValidityUtils
     {

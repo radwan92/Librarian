@@ -1,10 +1,8 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 
 namespace Librarian.Rle
 {
-    class RleDecompressor
+    public static class RleToBmp
     {
         // ESP + 13  :: BytesPerPixel
         // ESP + 14  :: repValue / ??
@@ -18,40 +16,13 @@ namespace Librarian.Rle
         // ESP + 2C  :: *repsBuffer[repIndex]
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public static void DecompressDirWithTest (string directory, string refDirectory)
+        public static BmpFile Convert (RleFile rle)
         {
-            var rleFiles = Directory.GetFiles (directory, "*.rle", SearchOption.AllDirectories);
-            var bmpFiles = Directory.GetFiles (refDirectory, "*.bmp", SearchOption.AllDirectories);
+            // BMP row size has to be a multiple of 4 Bytes, hence rounding to 4 bytes
+            var bmpImageWidth = rle.ImageType == 3 ? ((rle.ImageWidth + 1) / 2) * 2 : ((rle.ImageWidth + 3) / 4) * 4;
+            var imageSize     = rle.ImageHeight * bmpImageWidth * rle.BytesPerPixel;
 
-            foreach (var rle in rleFiles)
-            {
-                Decompress (rle);
-
-                var bmp    = Path.ChangeExtension (rle, "bmp");
-                var refBmp = bmpFiles.SingleOrDefault (b => Path.GetFileNameWithoutExtension (b) == Path.GetFileNameWithoutExtension (rle));
-
-                if (refBmp == null)
-                {
-                    Console.WriteLine ("ERROR. Ref bmp not found for " + rle);
-                    return;
-                }
-
-                bool areMd5Equal = ValidityUtils.AreMD5Equal (bmp, refBmp);
-
-                if (!areMd5Equal)
-                {
-                    Console.WriteLine (rle + " not equal");
-                    return;
-                }
-            }
-        }
-
-        /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public static void Decompress (string rlePath)
-        {
-            RleFile rle = new RleFile (rlePath);
-
-            byte[] imageBuffer = new byte[rle.ImageSize];
+            byte[] imageBuffer = new byte[imageSize];
 
             bool    dl                = false;
             int     pixCounter        = 0;
@@ -77,12 +48,12 @@ namespace Librarian.Rle
                             {
                                 if (rle.ImageType == 7)
                                 {
-                                    int pixIndex = (rle.ImageHeight - y - 1) * rle.BmpImageWidth + pixCounter;
+                                    int pixIndex = (rle.ImageHeight - y - 1) * bmpImageWidth + pixCounter;
                                     imageBuffer[pixIndex] = 0;
                                 }
                                 else
                                 {
-                                    int pixIndex = (rle.ImageHeight - y - 1) * rle.BmpImageWidth + pixCounter;
+                                    int pixIndex = (rle.ImageHeight - y - 1) * bmpImageWidth + pixCounter;
                                     pixIndex *= rle.BytesPerPixel;
 
                                     Array.Copy (rle.ColorRefBytes, 0, imageBuffer, pixIndex, rle.BytesPerPixel);
@@ -103,13 +74,13 @@ namespace Librarian.Rle
                             {
                                 if (rle.ImageType == 1)
                                 {
-                                    int pix = (rle.ImageHeight - y - 1) * rle.BmpImageWidth + pixCounter;
+                                    int pix = (rle.ImageHeight - y - 1) * bmpImageWidth + pixCounter;
                                     imageBuffer[pix] = repsBuffer[repIndex + 1];
                                     repIndex++;
                                 }
                                 else if (rle.ImageType == 3)
                                 {
-                                    int pix = (rle.ImageHeight - y - 1) * rle.BmpImageWidth + pixCounter;
+                                    int pix = (rle.ImageHeight - y - 1) * bmpImageWidth + pixCounter;
                                     imageBuffer[pix * 2]     = repsBuffer[repIndex + 1];
                                     imageBuffer[pix * 2 + 1] = repsBuffer[repIndex + 2];
 
@@ -117,7 +88,7 @@ namespace Librarian.Rle
                                 }
                                 else if (rle.ImageType == 7)
                                 {
-                                    int pix = (rle.ImageHeight - y - 1) * rle.BmpImageWidth + pixCounter;
+                                    int pix = (rle.ImageHeight - y - 1) * bmpImageWidth + pixCounter;
                                     imageBuffer[pix] = 1;
                                 }
 
@@ -131,10 +102,7 @@ namespace Librarian.Rle
                 }
             }
 
-            string decompressedFilePath = Path.ChangeExtension (rlePath, "bmp");
-
-            var bmpFile = new BmpFile (rle, imageBuffer);
-            bmpFile.WriteToFile (decompressedFilePath);
+            return BmpFile.CreateFromRle (rle, imageBuffer);
         }
     }
 }

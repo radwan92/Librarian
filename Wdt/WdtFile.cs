@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
+using Librarian.Utils;
 
-namespace Librarian
+namespace Librarian.Wdt
 {
-    class Book
+    public class WdtFile
     {
         public static readonly int HEADER_LENGTH = 0xE;
 
@@ -12,18 +13,24 @@ namespace Librarian
         static readonly int m_dir = 8;
         static readonly int m_uar = 2;
 
-        public string   Path;
-        public string   CompressionType;
-        public int      PageSize;
-        public int      SizeCompressed;
-        public int      SizeDecompressed;
-        public int      ChapterBufferSize;
+        public readonly string   Path;
+        public readonly string   CompressionType;
+        public readonly int      PageSize;
+        public readonly int      SizeCompressed;
+        public readonly int      SizeDecompressed;
+        public readonly int      ChapterBufferSize;
 
-        public TableOfContents  TableOfContents;
-        public ChapterList      ChapterList;
+        public WdtContents  Contents;
+        public ChapterList  ChapterList;
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public Book (string filePath)
+        public static WdtFile CreateFromFile (string filePath)
+        {
+            return new WdtFile (filePath);
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        WdtFile (string filePath)
         {
             Path = filePath;
 
@@ -42,20 +49,19 @@ namespace Librarian
 
             ChapterBufferSize = m_mlp * PageSize / m_dir + m_uar;
 
-            // Order is of importance here (TableOfContents depends on ChapterList)
-            ChapterList     = new ChapterList (this);
-            TableOfContents = new TableOfContents (this);
+            // Order is of importance here (WdtContents depend on ChapterList)
+            ChapterList = new ChapterList (this);
+            Contents    = new WdtContents (this);
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public void PrintBasicInfo ()
         {
-            // TODO: Push/Pop indent
             Console.WriteLine ();
-            DebugUtils.PrintHex (SizeCompressed, 8, "Compressed book size", 2);
-            DebugUtils.PrintHex (SizeDecompressed, 8, "Decompressed book size", 2);
-            DebugUtils.PrintHex (PageSize, 8, "Page Size", 3);
-            DebugUtils.PrintHex (ChapterBufferSize, 8, "Chapter buffer size");
+            DebugUtils.PrintHex (SizeCompressed, "Compressed wdtFile size");
+            DebugUtils.PrintHex (SizeDecompressed, "Decompressed wdtFile size");
+            DebugUtils.PrintHex (PageSize, "Page Size");
+            DebugUtils.PrintHex (ChapterBufferSize, "Chapter buffer size");
         }
     }
 }

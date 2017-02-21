@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle ("Librarian")]
-[assembly: AssemblyDescription ("")]
+[assembly: AssemblyDescription ("Wdt and Rle file reader/converter/decompressor")]
 [assembly: AssemblyConfiguration ("")]
-[assembly: AssemblyCompany ("")]
+[assembly: AssemblyCompany ("OpenTzar")]
 [assembly: AssemblyProduct ("Librarian")]
 [assembly: AssemblyCopyright ("Copyright ©  2017")]
 [assembly: AssemblyTrademark ("")]

@@ -1,12 +1,13 @@
 ﻿using System;
+using Librarian.Utils;
 
-namespace Librarian
+namespace Librarian.Wdt
 {
-    struct Chapter
+    public struct Chapter
     {
-        public int StartPosition;
-        public int EndPosition;
-        public int Size;
+        public readonly int StartPosition;
+        public readonly int EndPosition;
+        public readonly int Size;
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public Chapter (int startPosition, int endPosition)
@@ -20,9 +21,9 @@ namespace Librarian
         public void PrintInfo ()
         {
             Console.WriteLine ();
-            DebugUtils.PrintHex (StartPosition, 8, "Chapter start");
-            DebugUtils.PrintHex (EndPosition, 8, "Chapter end");
-            DebugUtils.PrintHex (Size, 8, "Chapter size");
+            DebugUtils.PrintHex (StartPosition, "Chapter start");
+            DebugUtils.PrintHex (EndPosition, "Chapter end");
+            DebugUtils.PrintHex (Size, "Chapter size");
         }
     }
 }

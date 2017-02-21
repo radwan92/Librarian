@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{09F53554-7F6F-4EC6-B504-A1C9BAE342FA}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Librarian</RootNamespace>
     <AssemblyName>Librarian</AssemblyName>
@@ -47,6 +47,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,22 +59,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BinaryUtils.cs" />
-    <Compile Include="DebugUtils.cs" />
+    <Compile Include="RleToBmpTester.cs" />
+    <Compile Include="Utils\BinaryUtils.cs" />
+    <Compile Include="Utils\DebugUtils.cs" />
     <Compile Include="Rle\BmpFile.cs" />
-    <Compile Include="Rle\RleDecompressor.cs" />
+    <Compile Include="Rle\RleToBmp.cs" />
     <Compile Include="Rle\RleFile.cs" />
-    <Compile Include="TzarFileInfo.cs" />
-    <Compile Include="Utils.cs" />
-    <Compile Include="Decompressor.cs" />
-    <Compile Include="Lzss.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Wdt\TzarFile.cs" />
+    <Compile Include="Utils\Utils.cs" />
+    <Compile Include="Utils\LzssUtils.cs" />
+    <Compile Include="WdtTester.cs" />
+    <Compile Include="Wdt\WdtDecompressor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Chapter.cs" />
-    <Compile Include="ChapterList.cs" />
-    <Compile Include="TableOfContents.cs" />
-    <Compile Include="Book.cs" />
-    <Compile Include="ValidityUtils.cs" />
+    <Compile Include="Wdt\Chapter.cs" />
+    <Compile Include="Wdt\ChapterList.cs" />
+    <Compile Include="Wdt\WdtContents.cs" />
+    <Compile Include="Wdt\WdtFile.cs" />
+    <Compile Include="Utils\ValidityUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">

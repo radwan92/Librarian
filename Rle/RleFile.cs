@@ -3,47 +3,75 @@ using System.IO;
 
 namespace Librarian.Rle
 {
-    class RleFile
+    // TODO: Remove unused variables like Unk_1-3, BatchCount, SpritesPerBatch
+    public class RleFile
     {
         public static readonly int HEADER_SIZE = 0x26;
 
         // Sequential layout
-        public byte     Unk_1;              // ESP + 84     // Always 32
-        public char[]   EncodingReversed;   // ESP + 85
-        public Int32    BatchCount;         // ESP + 88
-        public Int32    SpritesPerBatch;    // ESP + 8C
-        public Int32    Unk_2;              // ESP + 90     // Always 0
-        public char[]   Encoding;           // ESP + 94
-        public Int16    ImageWidth;         // ESP + 98
-        public Int16    ImageHeight;        // ESP + 9A
-        public byte     ImageType;          // ESP + 9C
-        public byte     Unk_3;              // ESP + 9C     // Always 0
-        public UInt16   TableLength_1;      // ESP + 9E
-        public UInt16   TableLength_2;      // ESP + A0
-        public Int32    ColorsInColorTable; // ESP + A2
-        public Int32    ColorRef;           // ESP + A6     // This is used to do some floating p. calculations at the beginning
+        /* ESP + 84 */ public readonly byte     Unk_1;                  // Always 32
+        /* ESP + 85 */ public readonly char[]   EncodingReversed;   
+        /* ESP + 88 */ public readonly Int32    BatchCount;         
+        /* ESP + 8C */ public readonly Int32    SpritesPerBatch;    
+        /* ESP + 90 */ public readonly Int32    Unk_2;                  // Always 0
+        /* ESP + 94 */ public readonly char[]   Encoding;           
+        /* ESP + 98 */ public readonly Int16    ImageWidth;         
+        /* ESP + 9A */ public readonly Int16    ImageHeight;        
+        /* ESP + 9C */ public readonly byte     ImageType;          
+        /* ESP + 9C */ public readonly byte     Unk_3;                  // Always 0
+        /* ESP + 9E */ public readonly UInt16   TableLength_1;      
+        /* ESP + A0 */ public readonly UInt16   TableLength_2;      
+        /* ESP + A2 */ public Int32             ColorsInColorTable { get; private set; } 
+        /* ESP + A6 */ public readonly Int32    ColorRef;               // This is used to do some floating p. calculations at the beginning
 
-        public int      BytesPerPixel;
-        public int      BmpImageWidth;  // This shouldn't actually be here as it doesn't belong to the RLE, but oh well...
-        public int      ImageSize;
-        public int      RefTableSize;
-        public byte[]   RefTable;
-        public byte[]   RepsTable;
-        public byte[]   ColorTable;
-        public byte[]   ColorRefBytes;
+        public int      BytesPerPixel   { get; private set; }
+        public int      RefTableSize    { get; private set; }
+        public byte[]   RefTable        { get; private set; }
+        public byte[]   RepsTable       { get; private set; }
+        public byte[]   ColorTable      { get; private set; }
+        public byte[]   ColorRefBytes   { get; private set; }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public RleFile (string rlePath)
+        public static RleFile CreateFromFile (string rlePath)
         {
-            using (var rleStream = File.OpenRead (rlePath))
+            using (var rleStream = new FileStream (rlePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                ParseHeader (rleStream);
-                SetupForImageType ();
-                CalculateImageDimensions ();
-                PrepareColorTable (rleStream);
-                PrepareRefTable (rleStream);
-                PrepareRepsTable (rleStream);
+                return new RleFile (rleStream);
             }
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        public static RleFile CreateFromStream (Stream stream)
+        {
+            return new RleFile (stream);
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------------- */
+        RleFile (Stream rleStream)
+        {
+            byte[] rleHeader = new byte[HEADER_SIZE];
+            rleStream.Read (rleHeader, 0, HEADER_SIZE);
+
+            Unk_1                 = rleHeader[0];
+            EncodingReversed      = System.Text.Encoding.ASCII.GetChars (rleHeader, 0x1, 0x3);
+            BatchCount            = BitConverter.ToInt32 (rleHeader, 0x4);
+            SpritesPerBatch       = BitConverter.ToInt32 (rleHeader, 0x8);
+            Unk_2                 = BitConverter.ToInt32 (rleHeader, 0xC);
+            Encoding              = System.Text.Encoding.ASCII.GetChars (rleHeader, 0x10, 0x4);
+            ImageWidth            = BitConverter.ToInt16 (rleHeader, 0x14);
+            ImageHeight           = BitConverter.ToInt16 (rleHeader, 0x16);
+            ImageType             = rleHeader[0x18];
+            Unk_3                 = rleHeader[0x19];
+            TableLength_1         = BitConverter.ToUInt16 (rleHeader, 0x1A);
+            TableLength_2         = BitConverter.ToUInt16 (rleHeader, 0x1C);
+            ColorsInColorTable    = BitConverter.ToInt32 (rleHeader, 0x1E);
+            ColorRef              = BitConverter.ToInt32 (rleHeader, 0x22);
+            ColorRefBytes         = BitConverter.GetBytes (ColorRef);
+
+            SetupForImageType ();
+            PrepareColorTable (rleStream);
+            PrepareRefTable (rleStream);
+            PrepareRepsTable (rleStream);
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
@@ -54,7 +82,6 @@ namespace Librarian.Rle
                 case 1:
                 {
                     BytesPerPixel = 1;
-                    BmpImageWidth = ((ImageWidth + 3) / 4) * 4;     // BMP row size has to be a multiple of 4 Bytes, hence rounding to 4 bytes
                 }
                 break;
 
@@ -62,7 +89,6 @@ namespace Librarian.Rle
                 {
                     ColorsInColorTable = 0;
                     BytesPerPixel      = 2;
-                    BmpImageWidth = ((ImageWidth + 1) / 2) * 2;
                 }
                 break;
 
@@ -70,7 +96,6 @@ namespace Librarian.Rle
                 {
                     ColorsInColorTable = 2;
                     BytesPerPixel      = 1;
-                    BmpImageWidth      = ((ImageWidth + 3) / 4) * 4;     // BMP row size has to be a multiple of 4 Bytes, hence rounding to 4 bytes
                 }
                 break;
 
@@ -91,7 +116,7 @@ namespace Librarian.Rle
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void PrepareRefTable (FileStream rleStream)
+        void PrepareRefTable (Stream rleStream)
         {
             RefTableSize = ImageHeight * 4;
             RefTable     = new byte[RefTableSize + 4];
@@ -105,7 +130,7 @@ namespace Librarian.Rle
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void PrepareRepsTable (FileStream rleStream)
+        void PrepareRepsTable (Stream rleStream)
         {
             int repsTableSize = (int)(rleStream.Length - rleStream.Position);
             RepsTable = new byte[repsTableSize];
@@ -114,7 +139,7 @@ namespace Librarian.Rle
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void PrepareColorTable (FileStream rleStream)
+        void PrepareColorTable (Stream rleStream)
         {
             ColorTable = new byte[ColorsInColorTable * 4];
 
@@ -134,35 +159,6 @@ namespace Librarian.Rle
                 ColorTable[1] = (byte)((int) (c2 * colorCoefficient));
                 ColorTable[2] = (byte)((int) (c3 * colorCoefficient));
             }
-        }
-
-        /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void ParseHeader (FileStream rleStream)
-        {
-            byte[] rleHeader = new byte[HEADER_SIZE];
-            rleStream.Read (rleHeader, 0, HEADER_SIZE);
-
-            Unk_1                 = rleHeader[0];
-            EncodingReversed      = System.Text.Encoding.ASCII.GetChars (rleHeader, 0x1, 0x3);
-            BatchCount            = BitConverter.ToInt32 (rleHeader, 0x4);
-            SpritesPerBatch       = BitConverter.ToInt32 (rleHeader, 0x8);
-            Unk_2                 = BitConverter.ToInt32 (rleHeader, 0xC);
-            Encoding              = System.Text.Encoding.ASCII.GetChars (rleHeader, 0x10, 0x4);
-            ImageWidth            = BitConverter.ToInt16 (rleHeader, 0x14);
-            ImageHeight           = BitConverter.ToInt16 (rleHeader, 0x16);
-            ImageType             = rleHeader[0x18];
-            Unk_3                 = rleHeader[0x19];
-            TableLength_1         = BitConverter.ToUInt16 (rleHeader, 0x1A);
-            TableLength_2         = BitConverter.ToUInt16 (rleHeader, 0x1C);
-            ColorsInColorTable    = BitConverter.ToInt32 (rleHeader, 0x1E);
-            ColorRef              = BitConverter.ToInt32 (rleHeader, 0x22);
-            ColorRefBytes         = BitConverter.GetBytes (ColorRef);
-        }
-
-        /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void CalculateImageDimensions ()
-        {
-            ImageSize = ImageHeight * BmpImageWidth * BytesPerPixel;
         }
     }
 }
