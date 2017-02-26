@@ -20,8 +20,8 @@ namespace Librarian.Wdt
         public readonly int      SizeDecompressed;
         public readonly int      ChapterBufferSize;
 
-        public WdtContents  Contents;
-        public ChapterList  ChapterList;
+        //public WdtContents  Contents    { get; private set; }
+        public ChapterList ChapterList { get; private set; }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public static WdtFile CreateFromFile (string filePath)
@@ -51,7 +51,7 @@ namespace Librarian.Wdt
 
             // Order is of importance here (WdtContents depend on ChapterList)
             ChapterList = new ChapterList (this);
-            Contents    = new WdtContents (this);
+            //Contents    = new WdtContents (this);
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */

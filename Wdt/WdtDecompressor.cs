@@ -6,7 +6,7 @@ namespace Librarian.Wdt
     public static class WdtDecompressor
     {
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public static byte[] DecompressTzarFile (TzarFile fileInfo, WdtFile wdtFile)
+        public static byte[] DecompressTzarFile (PackTzarFile fileInfo, WdtFile wdtFile)
         {
             byte[] fileBuffer = new byte[fileInfo.Size];
 

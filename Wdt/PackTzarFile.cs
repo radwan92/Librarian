@@ -1,6 +1,6 @@
 ﻿namespace Librarian.Wdt
 {
-    public struct TzarFile
+    public struct PackTzarFile
     {
         public readonly int      NameLength;
         public readonly string   Path;
@@ -8,7 +8,7 @@
         public readonly int      Offset;
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        public TzarFile (string path, int nameLength, int size, int offset)
+        public PackTzarFile (string path, int nameLength, int size, int offset)
         {
             Path            = path;
             NameLength      = nameLength;

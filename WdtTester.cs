@@ -10,14 +10,15 @@ namespace Librarian
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
         public void DecompressWdtToDirectory (string wdtPath, string outputDirectory)
         {
-            var wdtFile = WdtFile.CreateFromFile (wdtPath);
+            var wdtFile      = WdtFile.CreateFromFile (wdtPath);
+            var packContents = PackContents.CreateFromWdtFile (wdtFile);
 
-            for (int i = 0; i < wdtFile.Contents.Count; i++)
-                WriteTzarFileToDisk (wdtFile, wdtFile.Contents[i], outputDirectory);
+            for (int i = 0; i < packContents.Count; i++)
+                WriteTzarFileFromWdtToDisk (wdtFile, packContents[i], outputDirectory);
         }
 
         /* ---------------------------------------------------------------------------------------------------------------------------------- */
-        void WriteTzarFileToDisk (WdtFile wdtFile, TzarFile tzarFile, string outputDirectory)
+        void WriteTzarFileFromWdtToDisk (WdtFile wdtFile, PackTzarFile tzarFile, string outputDirectory)
         {
             var tzarFileBytes = WdtDecompressor.DecompressTzarFile (tzarFile, wdtFile);
 

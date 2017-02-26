@@ -65,7 +65,8 @@
     <Compile Include="Rle\BmpFile.cs" />
     <Compile Include="Rle\RleToBmp.cs" />
     <Compile Include="Rle\RleFile.cs" />
-    <Compile Include="Wdt\TzarFile.cs" />
+    <Compile Include="Wdt\PackFile.cs" />
+    <Compile Include="Wdt\PackTzarFile.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Compile Include="Utils\LzssUtils.cs" />
     <Compile Include="WdtTester.cs" />
@@ -73,7 +74,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Wdt\Chapter.cs" />
     <Compile Include="Wdt\ChapterList.cs" />
-    <Compile Include="Wdt\WdtContents.cs" />
+    <Compile Include="Wdt\PackContents.cs" />
     <Compile Include="Wdt\WdtFile.cs" />
     <Compile Include="Utils\ValidityUtils.cs" />
   </ItemGroup>
